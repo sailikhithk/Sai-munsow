@@ -237,6 +237,12 @@ export default function HeaderFooterLayout({ Component }) {
           subItems: [],
         },
         {
+          label: "Placements",
+          icon: <FaCode size={20} className="" />,
+          route: "/placements",
+          subItems: [],
+        },
+        {
           label: "Help & Support",
           icon: <FaQuestionCircle size={20} className="" />,
           route: "/adminHelp",
@@ -312,7 +318,7 @@ export default function HeaderFooterLayout({ Component }) {
         {
           label: "Question Bank",
           icon: <FaChartLine size={20} className="" />,
-          route: "/questionBank",
+          route: "/questionBanksList",
           subItems: [],
         },
         {

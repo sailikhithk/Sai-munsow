@@ -13,7 +13,7 @@ import {
   loadSoftSkillsList,
   prepare_interview,
 } from "../../redux/action";
-import "./Practice.css"; // Make sure to import your stylesheet
+import "./Practice.css";
 
 import StepConnector, {
   stepConnectorClasses,
@@ -26,9 +26,11 @@ import Tooltip from "@mui/material/Tooltip";
 import MutiSelect from "../../Components/Multiselect";
 import { useDarkMode } from "./../../Dark";
 import interview from "../../assets/interview.jpeg";
+// import JobDescriptionInput from "./JobDescription";
+import JobDescriptionForm from "./JobDescription";
 
 
-const QontoConnector = styled(StepConnector)(({ theme , linearGradientBackground}) => ({
+const QontoConnector = styled(StepConnector)(({ theme, linearGradientBackground }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
     top: 17,
     left: "calc(-50% + 1.5rem)",
@@ -71,6 +73,8 @@ const StepperComponent = () => {
   const [level, setLevel] = useState(0);
   const [experienceLevel, setExperienceLevel] = useState("low");
   const [selectedCategory, setSelectedCategory] = useState("skills");
+  const [selectedOptions, setSelectedOptions] = useState([]);
+
 
   const [selectedSoftskill, setSelectedSoftskill] = useState(null);
   const [selectedHardskill, setSelectedHardskill] = useState(null);
@@ -78,13 +82,19 @@ const StepperComponent = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [showAcknowledgement, setShowAcknowledgement] = useState(false);
 
+  const [jdcompany, setJdcompany] = useState('');
+  const [jdrole, setJdrole] = useState('');
+  const [cultcompany, setCultcompany] = useState('');
+  const [cultrole, setCultrole] = useState('');
+
   const payload = {
-    level: "",
+   
     specifications: {
       role: "",
       company: "",
       hard_skill: "",
-      soft_skill: ""
+      soft_skill: "",
+      level: "",
     }
   }
 
@@ -111,6 +121,15 @@ const StepperComponent = () => {
         return true;
       }
     }
+    if ((selectedCategory == "jd"||selectedCategory == "cult")&&currentStep==1) {
+      // console.log("selectedOptions",typeof (selectedOptions),currentStep)
+      if (Object.keys(selectedOptions).length>=3) {
+        console.log("hehe")
+        return false;
+      } else {
+        return true;
+      }
+    }
   };
 
   const {
@@ -123,7 +142,7 @@ const StepperComponent = () => {
   } = useSelector((state) => state?.data);
 
   const handleNext = () => {
-    payload.level = experienceLevel ? experienceLevel : "";
+    payload.specifications.level = experienceLevel ? experienceLevel : "";
     payload.specifications.role = selectedRole ? selectedRole?.label : "";
     payload.specifications.company = selectedCompany
       ? selectedCompany?.label
@@ -134,6 +153,27 @@ const StepperComponent = () => {
     payload.specifications.soft_skill = selectedSoftskill
       ? selectedSoftskill.map((skill) => skill.label)
       : [];
+      payload.interview_type=selectedCategory=="jd"?"jd_interview":selectedCategory=="cult"?"cultural_interview":selectedCategory=="skills"?"skill_interview":"company_role_interview";
+      if(selectedCategory=="jd"){
+        payload.specifications.jd_skill=selectedOptions;
+        payload.specifications.company=jdcompany;
+        payload.specifications.role=jdrole;
+        
+        delete payload?.specifications?.hard_skill
+        delete payload?.specifications?.soft_skill
+        delete payload?.specifications?.level
+
+      }
+      if(selectedCategory=="cult"){
+        payload.specifications.cultural_skill=selectedOptions;
+        payload.specifications.company=cultcompany;
+        payload.specifications.role=cultrole;
+
+        delete payload?.specifications?.hard_skill
+        delete payload?.specifications?.soft_skill
+        delete payload?.specifications?.level
+
+      }
     console.log("currentStep", payload);
     if (currentStep == 1) {
       console.log('currentStep == 1 : ', questionsList)
@@ -150,16 +190,16 @@ const StepperComponent = () => {
       //         navigate("/interview")
       //     }, 3000);
       // }
-  }
-  else if ((showAcknowledgement) && (currentStepModal === 0)) {
+    }
+    else if ((showAcknowledgement) && (currentStepModal === 0)) {
       console.log('currentStepModal == 0 : ', questionsList)
       setCurrentStepModal(currentStepModal + 1);
-  }
-  else if (currentStepModal === 1) {
+    }
+    else if (currentStepModal === 1) {
       console.log('currentStepModal == 1 : ', questionsList)
       setCurrentStepModal(currentStepModal + 1);
-  } 
-  else if (currentStepModal === 2) {
+    }
+    else if (currentStepModal === 2) {
       console.log('currentStepModal == 2 : ', questionsList)
       let toastId = toast("Wait .. redirecting to Interview Section", {
         autoClose: false,
@@ -193,26 +233,26 @@ const StepperComponent = () => {
   const linearGradientBackground = isDarkMode
     ? colorTheme.dark.selectBackground
     : colorTheme.light.selectBackground;
-  //button
+
   const textColors = isDarkMode
     ? colorTheme.dark.textColor2
-    : colorTheme.light.textColor2;   
+    : colorTheme.light.textColor2;
 
-    const textColor = isDarkMode
+  const textColor = isDarkMode
     ? colorTheme.dark.textColor3
     : colorTheme.light.textColor3;
 
-    const blackColors = isDarkMode
-    ? colorTheme.dark. blackColor4
-    : colorTheme.light.blackColor;  
+  const blackColors = isDarkMode
+    ? colorTheme.dark.blackColor4
+    : colorTheme.light.blackColor;
 
-    const grayColors=isDarkMode 
-    ? colorTheme.dark.   grayColor3
-    : colorTheme.light.  grayColor;  
+  const grayColors = isDarkMode
+    ? colorTheme.dark.grayColor3
+    : colorTheme.light.grayColor;
 
-    const previousButton=isDarkMode
-    ?colorTheme.dark.backgrounds 
-    :colorTheme.light.backgrounds;
+  const previousButton = isDarkMode
+    ? colorTheme.dark.backgrounds
+    : colorTheme.light.backgrounds;
 
   useEffect(() => {
     console.log("selectedSoftskill", selectedSoftskill);
@@ -231,30 +271,22 @@ const StepperComponent = () => {
     let toastId = toast("Wait .. redirecting to Interview Section", { autoClose: false });
     toast.update(toastId, { render: "Wait .. redirecting to Interview Section", type: "success", autoClose: true })
     if (questionsList?.questions?.length > 0) {
-        setTimeout(() => {
-            navigate("/interview")
-        }, 3000);
+      setTimeout(() => {
+        navigate("/interview")
+      }, 3000);
     }
   };
 
   return (
-    <div className="p-5 lg:p-10 ">
+    <div className=" ">
       <div className="w-full mx-auto rounded-xl">
-        <p className="p-5 text-xl font-semibold">Practice</p>
-        <Divider />
-        {/* <Stepper 
-                    steps={steps} 
-                    activeStep={currentStep} 
-                    activeColor={"#886CC0"} 
-                    completeColor={"#886CC0"} 
-                    completeBorderColor={"#886CC0"} 
-                    completeTitleColor={"#886CC0"} 
-                    size={40}
-                /> */}
+        {/* <p className="p-5 text-xl font-semibold">Practice</p>
+        <Divider /> */}
+
         <Stepper
           activeStep={currentStep}
           alternativeLabel
-          connector={<QontoConnector  linearGradientBackground={linearGradientBackground}/>}
+          connector={<QontoConnector linearGradientBackground={linearGradientBackground} />}
           style={{ marginTop: "1rem" }}
         >
           {steps.map((label, index) => (
@@ -278,23 +310,24 @@ const StepperComponent = () => {
           ))}
         </Stepper>
         <Divider style={{ marginTop: "1rem" }} />
-        <div className="flex mt-4 p-4 items-center justify-center relative overflow-auto flex-col md:flex-row max-w-full h-auto">
+        <div className="flex  p-4 items-center justify-center relative overflow-auto flex-col md:flex-row max-w-full h-auto">
+          
           {currentStep === 0 && (
-            <>
-              {/* <div > */}
+            <div className="grid grid-cols-2 grid-rows-2 gap-8 h-auto p-8">
               <div
-                className={`bg-${
-                  selectedCategory === "skills" ? "gray-100" : ""
-                } p-7 rounded-xl relative overflow-auto max-w-full h-auto`}
+                className={`bg-${selectedCategory === "skills" ? "gray-200" : "gray-100"
+                  } p-7 rounded-xl  text-right ml-auto`}
                 onClick={() => {
                   setSelectedCategory("skills");
                   setSelectedRole(null);
                   setSelectedCompany(null);
+                  setJdcompany("");
+                  setJdrole("");
+                  setCultcompany("");
+                  setCultrole("");
                 }}
               >
                 <div className="flex relative overflow-auto ">
-                  {/* <div className="text-sm font-semibold text-gray-500 mb-4">Choose your mock interview</div> */}
-
                   <input
                     type="radio"
                     name="selectionCategory"
@@ -313,7 +346,7 @@ const StepperComponent = () => {
                       fontSize: "1.5rem",
                       fontWeight: "600",
                       marginBottom: "0.5rem",
-                      color:grayColors , // Set the desired text color
+                      color: grayColors,
                     }}
                   >
                     Skill Specific
@@ -323,17 +356,11 @@ const StepperComponent = () => {
                   className={
                     selectedCategory !== "skills"
                       ? "opacity-50 pointer-events-none relative overflow-auto max-w-full h-auto" : ' relative overflow-auto max-w-full h-auto'
-            
+
                   }
                 >
                   <label className="flex items-center space-x-2 my-3 relative overflow-auto">
-                    {/* <input
-                                            type="checkbox"
-                                            name="hardSkills"
-                                            checked={hardSkills}
-                                            className="h-5 w-5 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
-                                            onChange={() => setHardSkills(!hardSkills)}
-                                        /> */}
+
                     <span className="font-bold pr-2 relative overflow-auto">Hard Skills</span>
                   </label>
                   <MutiSelect
@@ -349,13 +376,6 @@ const StepperComponent = () => {
                   />
                   <div>
                     <label className="flex items-center space-x-2 my-3">
-                      {/* <input
-                                            type="checkbox"
-                                            name="softSkills"
-                                            checked={softSkills}
-                                            className="h-5 w-5 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
-                                            onChange={() => setSoftSkills(!softSkills)}
-                                        /> */}
                       <span className="font-bold pr-2">Soft Skills</span>
                     </label>
                     <MutiSelect
@@ -371,21 +391,23 @@ const StepperComponent = () => {
                   </div>
                 </div>
               </div>
-              <div className="p-10"></div>
+
 
               <div
-                className={`bg-${
-                  selectedCategory === "role" ? "gray-100" : ""
-                } p-7 rounded-xl relative overflow-auto max-w-full h-auto`}
+                className={`bg-${selectedCategory === "role" ? "gray-300" : "gray-100"
+                  } p-7 rounded-xl relative overflow-auto max-w-full h-auto mr-auto w-full`}
                 onClick={() => {
                   setSelectedCategory("role");
                   setSelectedSoftskill(null);
                   setSelectedHardskill(null);
+                  setJdcompany("");
+                  setJdrole("");
+                  setCultcompany("");
+                  setCultrole("");
                 }}
                 style={{ color: textColors }}
               >
                 <div className="flex ">
-                  {/* <div className="text-sm font-semibold text-gray-500 mb-4">Choose your mock interview</div> */}
                   <input
                     type="radio"
                     name="selectionCategory"
@@ -405,7 +427,7 @@ const StepperComponent = () => {
 
                       fontWeight: "600",
                       marginBottom: "0.5rem",
-                      color:  grayColors, // Set the desired text color
+                      color: grayColors,
                     }}
                   >
                     Role Specific
@@ -420,15 +442,9 @@ const StepperComponent = () => {
                   }
                 >
                   <label className="flex items-center space-x-2 my-3">
-                    {/* <input
-                                            type="checkbox"
-                                            name="chosenCompany"
-                                            checked={chosenCompany}
-                                            className="h-5 w-5 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
-                                            onChange={() => setChosenCompany(!chosenCompany)}
-                                        /> */}
 
-                    <span className="font-bold pr-2"  style={{color:grayColors}}
+
+                    <span className="font-bold pr-2" style={{ color: grayColors }}
                     >
                       Choose Company{" "}
                       <span className="font-bold text-red-500 text-2xl">
@@ -460,13 +476,7 @@ const StepperComponent = () => {
                     }
                   >
                     <label className="flex items-center space-x-2 my-3">
-                      {/* <input
-                                            type="checkbox"
-                                            name="chosenRole"
-                                            checked={chosenRole}
-                                            className="h-5 w-5 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
-                                            onChange={() => setChosenRole(!chosenRole)}
-                                        /> */}
+
 
                       <span className="font-bold pr-2 ">
                         Choose Role{" "}
@@ -490,115 +500,226 @@ const StepperComponent = () => {
                 )}
               </div>
 
-              {/* </div> */}
-            </>
+              <div
+                className={`bg-${selectedCategory === "jd" ? "gray-200" : "gray-100"
+                  } p-7 rounded-xl relative overflow-auto max-w-full h-auto ml-auto w-full`}
+                onClick={() => {
+                  setSelectedCategory("jd");
+                  setSelectedRole(null);
+                  setSelectedCompany(null);
+                  setSelectedSoftskill(null);
+                  setSelectedHardskill(null);
+
+                  setCultcompany("");
+                  setCultrole("");
+                }}
+              >
+                <div className="flex relative overflow-auto ">
+                  <input
+                    type="radio"
+                    name="selectionCategory"
+                    value="jd"
+                    checked={selectedCategory === "jd"}
+                    onChange={() => setSelectedCategory("jd")}
+                    className="p-1 m-2 relative overflow-auto"
+                    style={{
+                      color: linearGradientBackground,
+                      outlineColor: linearGradientBackground
+                    }}
+                  />
+                  <h2
+                    className="relative overflow-auto"
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "600",
+                      marginBottom: "0.5rem",
+                      color: grayColors,
+                    }}
+                  >
+                    Job Description Specific
+                  </h2>
+                </div>
+                <div
+                  className={
+                    selectedCategory !== "jd"
+                      ? "opacity-50 pointer-events-none relative overflow-auto max-w-full h-auto" : ' relative overflow-auto max-w-full h-auto'
+                  }
+                >
+                  <div className="my-3">
+                    <label className="font-bold block mb-2">
+                      Company Name:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter company name"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      onChange={e => setJdcompany(e.target.value)}
+                      value={jdcompany}
+                    />
+                  </div>
+                  <div className="my-3">
+                    <label className="font-bold block mb-2">
+                      Role:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter role"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      onChange={e => setJdrole(e.target.value)}
+                      value={jdrole}
+                    />
+                  </div>
+                </div>
+              </div>
+
+
+              <div
+                className={`bg-${selectedCategory === "cult" ? "gray-200" : "gray-100"
+                  } p-7 rounded-xl relative overflow-auto max-w-full h-auto mr-auto w-full`}
+                onClick={() => {
+                  setSelectedCategory("cult");
+                  setSelectedRole(null);
+                  setSelectedCompany(null);
+                  setSelectedSoftskill(null);
+                  setSelectedHardskill(null);
+                  setJdcompany("");
+                  setJdrole("");
+
+                }}
+              >
+                <div className="flex relative overflow-auto ">
+                  <input
+                    type="radio"
+                    name="selectionCategory"
+                    value="cult"
+                    checked={selectedCategory === "cult"}
+                    onChange={() => setSelectedCategory("cult")}
+                    className="p-1 m-2 relative overflow-auto"
+                    style={{
+                      color: linearGradientBackground,
+                      outlineColor: linearGradientBackground
+                    }}
+                  />
+                  <h2
+                    className="relative overflow-auto"
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "600",
+                      marginBottom: "0.5rem",
+                      color: grayColors,
+                    }}
+                  >
+                    Cultural Fit Specific
+                  </h2>
+                </div>
+                <div
+                  className={
+                    selectedCategory !== "cult"
+                      ? "opacity-50 pointer-events-none relative overflow-auto max-w-full h-auto" : ' relative overflow-auto max-w-full h-auto'
+                  }
+                >
+                  <div className="my-3">
+                    <label className="font-bold block mb-2">
+                      Company Name:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter company name"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      onChange={e => setCultcompany(e.target.value)}
+                      value={cultcompany}
+                    />
+                  </div>
+                  <div className="my-3">
+                    <label className="font-bold block mb-2">
+                      Role:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter role"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      onChange={e => setCultrole(e.target.value)}
+                      value={cultrole}
+                    />
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
           )}
 
           {currentStep === 1 && (
-            <div  className="relative overflow-auto max-w-full h-auto "
-            >
-              <h2
-              className="relative overflow-auto max-w-full h-auto"
-                style={{
-                  textAlign: "center",
-                  fontSize: "1.5rem",
-                  fontWeight: "bold",
-                  marginBottom: "2px",
-                  color: grayColors,
-                }}
-              >
-                Level
-              </h2>
-              <div
-              className="w-[14rem] lg:w-[35rem] md:w-[27rem] relative overflow-auto sm:w-[20rem] h-auto"
-                style={{
-                  border: `3.5px solid ${textColors}`,
-                  borderRadius: "20px",
-                  padding: "2rem 2.5rem"
-                }}
-              >
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  className="w-full mb-4 appearance-none h-2 rounded-lg"
-                  style={{ background: `linear-gradient(to right, #0fe1d2 ${level}%, #dedcdc ${level}%) `}}
-                />
 
-                <div className="flex flex-col sm:flex-row justify-evenly text-md relative overflow-auto max-w-full h-auto">
-                  <button
-                    onClick={() => {
-                      setLevel(0);
-                      setExperienceLevel("low");
+            <div>
+                {(selectedCategory == "jd" || selectedCategory == "cult") && (
+              <JobDescriptionForm selectedCategory={selectedCategory} jdcompany={jdcompany} jdrole={jdrole} cultcompany={cultcompany} cultrole={cultrole} selectedOptions={selectedOptions} setSelectedOptions={setSelectedOptions}/>)}
+
+              {(selectedCategory == "skills" || selectedCategory == "role") && (
+                <div className="relative overflow-auto max-w-full h-auto "
+                >
+                  <h2
+                    className="relative overflow-auto max-w-full h-auto"
+                    style={{
+                      textAlign: "center",
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                      marginBottom: "2px",
+                      color: grayColors,
                     }}
-                    className="bg-green-500 hover:bg-green-600 text-white text-white mb-2 sm:mb-0 sm:w-[30%] lg:w-[7rem] rounded-md relative overflow-auto max-w-full h-auto"
                   >
-                    Beginner
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLevel(50);
-                      setExperienceLevel("medium");
+                    Level
+                  </h2>
+                  <div
+                    className="w-[14rem] lg:w-[35rem] md:w-[27rem] relative overflow-auto sm:w-[20rem] h-auto"
+                    style={{
+                      border: `3.5px solid ${textColors}`,
+                      borderRadius: "20px",
+                      padding: "2rem 2.5rem"
                     }}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 mb-2 sm:mb-0 sm:w-[30%] lg:w-[7rem] rounded-md relative overflow-auto max-w-full h-auto"
                   >
-                    Intermediate
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLevel(100);
-                      setExperienceLevel("high");
-                    }}
-                    className="bg-red-500 hover:bg-red-600 text-white text-white py-1 px-3 rounded-md relative overflow-auto max-w-full h-auto"
-                  >
-                    Advanced
-                  </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={level}
+                      onChange={(e) => setLevel(e.target.value)}
+                      className="w-full mb-4 appearance-none h-2 rounded-lg"
+                      style={{ background: `linear-gradient(to right, #0fe1d2 ${level}%, #dedcdc ${level}%) ` }}
+                    />
+
+                    <div className="flex flex-col sm:flex-row justify-evenly text-md relative overflow-auto max-w-full h-auto">
+                      <button
+                        onClick={() => {
+                          setLevel(0);
+                          setExperienceLevel("low");
+                        }}
+                        className="bg-green-500 hover:bg-green-600 text-white text-white mb-2 sm:mb-0 sm:w-[30%] lg:w-[7rem] rounded-md relative overflow-auto max-w-full h-auto"
+                      >
+                        Beginner
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLevel(50);
+                          setExperienceLevel("medium");
+                        }}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 mb-2 sm:mb-0 sm:w-[30%] lg:w-[7rem] rounded-md relative overflow-auto max-w-full h-auto"
+                      >
+                        Intermediate
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLevel(100);
+                          setExperienceLevel("high");
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white text-white py-1 px-3 rounded-md relative overflow-auto max-w-full h-auto"
+                      >
+                        Advanced
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {/* <div className="text-center font-semibold">Or</div>
-                            <h2 className="text-center text-sm font-semibold mb-2 text-purple-600">Choose your Experience level</h2>
-                            <div className="flex justify-between items-center"> */}
-              {/* <div>
-                                    <select
-                                        className="border rounded p-1"
-                                        value={experienceLevel}
-                                        onChange={(e) => setExperienceLevel(e.target.value)}
-                                    >
-                                        <option value="Beginner">Beginner</option>
-                                        <option value="Intermediate">Intermediate</option>
-                                        <option value="Advanced">Advanced</option>
-                                    </select>
-                                </div> */}
-
-              {/* <Autocomplete
-                                    size="small"
-                                    fullWidth
-                                    disablePortal
-                                    value={experienceLevel}
-                                    defaultValue={experienceLevel}
-                                    id="combo-box-demo"
-                                    options={[
-                                        { label: "Beginner", value: "Beginner" },
-                                        { label: "Intermediate", value: "Intermediate" },
-                                        { label: "Advanced", value: "Advanced" },
-                                    ]}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            // label={o?.label} 
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                style: {
-                                                    borderRadius: "0.4rem",
-                                                },
-                                            }}
-                                        />
-                                    )}
-                                    onChange={(e, value) => { setExperienceLevel(value) }}
-                                />
-                            </div> */}
+              )}
             </div>
           )}
 
@@ -634,7 +755,7 @@ const StepperComponent = () => {
                       border: chosenCompany
                         ? `2px solid ${linearGradientBackground}`
                         : "2px solid grey",
-                    outlineColor: chosenCompany ? linearGradientBackground : "none",
+                      outlineColor: chosenCompany ? linearGradientBackground : "none",
                       backgroundColor: chosenCompany
                         ? "#0fe1d2"
                         : "transparent",
@@ -685,7 +806,7 @@ const StepperComponent = () => {
             <button
               onClick={handleNext}
               disabled={handleSelection()} // Use the isRoleSelected state variable here
-              className={`shadow-md mx-2 py-2 px-4 rounded-md ${handleSelection() ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`shadow-md mx-2 px-4 rounded-md ${handleSelection() ? 'opacity-50 cursor-not-allowed' : ''}`}
               style={{
                 backgroundColor: linearGradientBackground,
                 color: textColor,
@@ -698,23 +819,15 @@ const StepperComponent = () => {
             </button>
           )}
 
-          {/* {currentStep < steps.length - 1 && (
-                        <button
-                            onClick={handleNext}
-                            className="bg-blue-500 mx-2 hover:bg-[#886cc0] text-white py-2 px-4 rounded-md"
-                        >
-                            Next
-                        </button>
-                    )} */}
           {(currentStep === steps.length - 1) && (
-            <span>
+              <span>
               {chosenCompany && audioValidated && videoValidated ? (
                 <button
                   onClick={handleNext}
                   className="shadow-md mx-2 hover:bg-green-700 text-white py-2 px-4 rounded-md"
-                  style={{ 
+                  style={{
                     backgroundColor: linearGradientBackground,
-                    color: textColor, 
+                    color: textColor,
                   }}
                 >
                   Submit
@@ -725,9 +838,9 @@ const StepperComponent = () => {
                     onClick={handleNext}
                     disabled={!chosenCompany}
                     className="shadow-md bg-green-500 mx-2 hover:bg-green-700 text-white py-2 px-4 rounded-md opacity-50 cursor-not-allowed"
-                    style={{ 
+                    style={{
                       backgroundColor: linearGradientBackground,
-                      color: textColor, 
+                      color: textColor,
                     }}
                   >
                     Submit
@@ -740,144 +853,140 @@ const StepperComponent = () => {
       </div>
 
       {showAcknowledgement && (
-  <div className="modal">
-    <div className="modal-content">
-      {currentStepModal === 0 && (
-        <>
-          <div className="modalContent">
-          <h1 className="text-2xl font-bold text-[#777b7e] mb-4">
-            Prepare for your interview!
-          </h1>
-          {/* <br /> */}
+        <div className="modal">
+          <div className="modal-content">
+            {currentStepModal === 0 && (
+              <>
+                <div className="modalContent">
+                  <h1 className="text-2xl font-bold text-[#777b7e] mb-4">
+                    Prepare for your interview!
+                  </h1>
 
-          <div className="flex justify-center">
-            <img src={interview} alt="Interview" className="w-[200px] h-[200px] rounded-2xl" />
-          </div><br/> 
+                  <div className="flex justify-center">
+                    <img src={interview} alt="Interview" className="w-[200px] h-[200px] rounded-2xl" />
+                  </div><br />
 
-          <p className="text-gray-500 font-semibold mb-4">
-            Before you start the interview, please review these tips:
-          </p>
+                  <p className="text-gray-500 font-semibold mb-4">
+                    Before you start the interview, please review these tips:
+                  </p>
 
-          <ul className="list-disc font-semibold pl-5 text-gray-500 mb-4">
-            <li className="mb-2">Find a quiet and well-lit place.</li>
-            <li className="mb-2">Ensure a stable internet connection.</li>
-            <li className="mb-2">Test your audio and video beforehand.</li>
-            <li className="mb-2">Have a notepad, pen, and water bottle ready (optional).</li>
-          </ul>
-          <br />
+                  <ul className="list-disc font-semibold pl-5 text-gray-500 mb-4">
+                    <li className="mb-2">Find a quiet and well-lit place.</li>
+                    <li className="mb-2">Ensure a stable internet connection.</li>
+                    <li className="mb-2">Test your audio and video beforehand.</li>
+                    <li className="mb-2">Have a notepad, pen, and water bottle ready (optional).</li>
+                  </ul>
+                  <br />
 
-          <div className="flex items-center justify-center">
-            <div className="flex space-x-2">
-              {[...Array(stepsModal)].map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === currentStepModal ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
-                ></div>
-              ))}
-            </div>
-          </div>
-          </div>
-        </>
-        
-      )}
+                  <div className="flex items-center justify-center">
+                    <div className="flex space-x-2">
+                      {[...Array(stepsModal)].map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 h-2 rounded-full ${index === currentStepModal ? 'bg-blue-500' : 'bg-gray-300'
+                            }`}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
 
-      {currentStepModal === 1 && (
-        <>
-          <div className="modalContent">
-          <p className="text-2xl font-bold text-[#777b7e] mb-4">
-            Feeling confident and ready? Let's begin!
-          </p>
-          <br />
-          <br />
-          <div className="flex justify-center">
-            <img src={interview} alt="Interview" className="w-[200px] h-[200px] rounded-2xl" />
-          </div><br/>
+            )}
 
-          <div className="flex items-center justify-center">
-            <div className="flex space-x-2">
-              {[...Array(stepsModal)].map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === currentStepModal ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
-                ></div>
-              ))}
-            </div>
-          </div>
-          <br />
-          </div>
-        </>
-      )}
+            {currentStepModal === 1 && (
+              <>
+                <div className="modalContent">
+                  <p className="text-2xl font-bold text-[#777b7e] mb-4">
+                    Feeling confident and ready? Let's begin!
+                  </p>
+                  <br />
+                  <br />
+                  <div className="flex justify-center">
+                    <img src={interview} alt="Interview" className="w-[200px] h-[200px] rounded-2xl" />
+                  </div><br />
 
-      {currentStepModal === 2 && (
-        <>
-          <div className="modalContent">
-          <p className="text-2xl font-bold text-[#777b7e] mb-4">Start your interview now!</p>
-          <br />
+                  <div className="flex items-center justify-center">
+                    <div className="flex space-x-2">
+                      {[...Array(stepsModal)].map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 h-2 rounded-full ${index === currentStepModal ? 'bg-blue-500' : 'bg-gray-300'
+                            }`}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                  <br />
+                </div>
+              </>
+            )}
 
-          <p className="text-gray-500 mb-4 font-bold">
-            Remember, make eye contact, smile, and speak clearly and confidently.
-          </p>
-          <br />
+            {currentStepModal === 2 && (
+              <>
+                <div className="modalContent">
+                  <p className="text-2xl font-bold text-[#777b7e] mb-4">Start your interview now!</p>
+                  <br />
 
-          <div className="flex justify-center">
-            <img src={interview} alt="Interview" className="w-[200px] h-[200px] rounded-2xl" />
-          </div><br/> 
+                  <p className="text-gray-500 mb-4 font-bold">
+                    Remember, make eye contact, smile, and speak clearly and confidently.
+                  </p>
+                  <br />
 
-          <div className="flex items-center justify-center">
-            <div className="flex space-x-2">
-              {[...Array(stepsModal)].map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === currentStepModal ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
-                ></div>
-              ))}
-            </div>
-          </div>
-          <br />
-          </div>
-        </>
-      )}
+                  <div className="flex justify-center">
+                    <img src={interview} alt="Interview" className="w-[200px] h-[200px] rounded-2xl" />
+                  </div><br />
 
-      <div className="flex justify-end">
-        {(currentStepModal > 0) && (
-          <button
-            onClick={handlePrevModal}
-            className="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white mx-2 py-2 px-4 rounded-md"
-            >
-            Previous
-          </button>
-        )}
-        {(currentStepModal < stepsModal - 1) && (
-          <button
-          onClick={handleNext}
-          className={`bg-blue-500 mx-2 text-white py-2 px-4 rounded-md 
+                  <div className="flex items-center justify-center">
+                    <div className="flex space-x-2">
+                      {[...Array(stepsModal)].map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 h-2 rounded-full ${index === currentStepModal ? 'bg-blue-500' : 'bg-gray-300'
+                            }`}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                  <br />
+                </div>
+              </>
+            )}
+
+            <div className="flex justify-end">
+              {(currentStepModal > 0) && (
+                <button
+                  onClick={handlePrevModal}
+                  className="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white mx-2 py-2 px-4 rounded-md"
+                >
+                  Previous
+                </button>
+              )}
+              {(currentStepModal < stepsModal - 1) && (
+                <button
+                  onClick={handleNext}
+                  className={`bg-blue-500 mx-2 text-white py-2 px-4 rounded-md 
                       hover:bg-blue-700 `}
-        >
-          Next
-        </button>
-        )}
-        {(currentStepModal === stepsModal - 1) && (
-          <span>
-            <button
-              onClick={handleNext}
-              className="bg-green-500 mx-2 hover:bg-green-700 text-white py-2 px-4 rounded-md"
-            >
-              I am ready - start my interview now
-            </button>
-          </span>
-        )}
-      </div>
-    </div>
-    </div>
-  )}
+                >
+                  Next
+                </button>
+              )}
+              {(currentStepModal === stepsModal - 1) && (
+                <span>
+                  <button
+                    onClick={handleNext}
+                    className="bg-green-500 mx-2 hover:bg-green-700 text-white py-2 px-4 rounded-md"
+                  >
+                    I am ready - start my interview now
+                  </button>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-  </div>
+    </div>
   );
 };
 

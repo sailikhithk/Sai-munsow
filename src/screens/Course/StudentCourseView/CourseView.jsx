@@ -16,6 +16,7 @@ const StudentCourseView = () => {
     const { detailedCourse } = useSelector((state) => state?.data);
     const [selectedSubtopic, setSelectedSubtopic] = useState(null);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [spokenContent, setSpokenContent] = useState('');
 
     // Maintain a reference to the latest utterance
     const latestUtteranceRef = useRef(null);
@@ -24,78 +25,103 @@ const StudentCourseView = () => {
         dispatch(loadDetailedCourse(id));
     }, [dispatch, id]);
 
-    const handleSelectSubtopic = (subtopic) => {
-        setSelectedSubtopic(subtopic);
-    };
+    // const handleSelectSubtopic = (subtopic) => {
+    //     setSelectedSubtopic(subtopic);
+    // };
 
     useEffect(() => {
-
         const firstUncompletedSubtopic = detailedCourse?.content_data?.flatMap(topic => topic?.subtopics).find(subtopic => !subtopic?.completed);
         setSelectedSubtopic(firstUncompletedSubtopic);
         handleSpeak(firstUncompletedSubtopic?.content);
     }, [detailedCourse]);
 
-
-    //new code
     useEffect(() => {
         handleSpeak(selectedSubtopic?.content);
     }, [selectedSubtopic]);
 
-    // Cleanup function to stop speech when the component is unmounted
     useEffect(() => {
         return () => {
             handleStop();
         };
     }, []);
 
-    // Cleanup function to stop speech when the route changes
     useEffect(() => {
         const unlisten = () => {
             handleStop();
         };
 
-        // navigate('/', { state: {} });
-
         return unlisten;
     }, [navigate]);
-
 
     const handleSpeak = (text) => {
         const description = text || selectedSubtopic?.content;
         if (description) {
-            // Cancel any previous utterances
-            if (latestUtteranceRef.current) {
-                window.speechSynthesis.cancel();
-            }
-
-            const sanitizedDescription = description.replace(/<[^>]*>/g, ''); // Remove HTML tags
-            const utterance = new SpeechSynthesisUtterance(sanitizedDescription);
-            window.speechSynthesis.speak(utterance);
-            setIsSpeaking(true);
-
-            // Update the latest utterance reference
-            latestUtteranceRef.current = utterance;
+            // Cancel any ongoing speech synthesis
+            window.speechSynthesis.cancel();
+    
+            const sanitizedDescription = description.replace(/<[^>]*>/g, '');
+            const chunks = sanitizedDescription.match(/.{1,200}/g) || [];
+    
+            let chunkIndex = 0;
+    
+            const speakNextChunk = () => {
+                if (chunkIndex < chunks.length) {
+                    const chunk = chunks[chunkIndex++];
+                    const utterance = new SpeechSynthesisUtterance(chunk);
+                    utterance.rate = 1.0;
+                    setVoiceAndSpeak(utterance);
+                    utterance.onend = speakNextChunk;
+    
+                    latestUtteranceRef.current = utterance;
+                } else {
+                    setIsSpeaking(false);
+                    setSpokenContent('');
+                }
+            };
+    
+            const setVoiceAndSpeak = (utterance) => {
+                const voices = window.speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => voice.gender === 'female' || voice.name.toLowerCase().includes('female'));
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                } else {
+                    setTimeout(() => setVoiceAndSpeak(utterance), 50);
+                    return;
+                }
+    
+                window.speechSynthesis.speak(utterance);
+                setIsSpeaking(true);
+            };
+    
+            speakNextChunk();
         }
     };
-
+    
+    const handleSelectSubtopic = (subtopic) => {
+        if (subtopic !== selectedSubtopic) {
+            // Stop any current speech synthesis
+            handleStop();
+            setSelectedSubtopic(subtopic);
+            handleSpeak(subtopic.content);
+        }
+    };
+    
     const handleStop = () => {
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
-
-        // Reset the latest utterance reference
+        setSpokenContent('');
         latestUtteranceRef.current = null;
     };
+    
 
     return (
         <div className="p-4">
             <CourseOverview course={detailedCourse} show={true} text={"Back"} />
 
             <div className="flex w-full">
-                <div className="w-4/6 p-4 overflow-y-auto rounded-lg bg-white mr-4">
+                <div className="w-4/6 p-4 overflow-y-auto rounded-lg  mr-4">
                     {selectedSubtopic && (
-                        <div>
-                            <div dangerouslySetInnerHTML={{ __html: selectedSubtopic.content }} />
-                        </div>
+                        <div dangerouslySetInnerHTML={{ __html: spokenContent || selectedSubtopic.content }} />
                     )}
                 </div>
 
@@ -103,12 +129,12 @@ const StudentCourseView = () => {
                     <div className="flex items-center justify-end mb-4">
                         {!isSpeaking ? (
                             <VolumeOffIcon
-                                style={{ cursor: 'pointer', fontSize: '3rem',color:"#886cc0" }}
+                                style={{ cursor: 'pointer', fontSize: '3rem', color: "#886cc0" }}
                                 onClick={() => handleSpeak(selectedSubtopic?.content)}
                             />
                         ) : (
                             <VolumeUpIcon
-                                style={{ cursor: 'pointer', fontSize: '3rem',color:"#886cc0" }}
+                                style={{ cursor: 'pointer', fontSize: '3rem', color: "#886cc0" }}
                                 onClick={handleStop}
                             />
                         )}
